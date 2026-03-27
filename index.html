@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>小猫农场 - 塑料袋&钢镚</title>
+    <style>
+        canvas { border: 2px solid #333; background: #fff; }
+        body { display: flex; flex-direction: column; align-items: center; background: #f0f0f0; }
+        h1 { color: #333; font-family: 微软雅黑; }
+    </style>
+</head>
+<body>
+    <h1>小猫农场 🐱 塑料袋 & 钢镚</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 颜色定义
+        const SKY = '#87CEEB';
+        const GRASS = '#228B22';
+        const WHITE = '#FFFFFF';
+        const BLACK = '#000000';
+        const CALICO_WHITE = '#FFFFFF';
+        const CALICO_BLACK = '#000000';
+        const CALICO_ORANGE = '#FFA500';
+        const SILVER = '#D3D3D3';
+        const SILVER_DARK = '#A9A9A9';
+        const PLAYER_GREEN = '#228B22';
+        const PLAYER_PANTS = '#696969';
+
+        // 玩家
+        const player = { x: 400, y: 300, w: 32, h: 48, speed: 4 };
+        // 小猫
+        const cats = [
+            { x: 200, y: 200, w: 32, h: 32, type: 'calico', timer: 0 },
+            { x: 500, y: 200, w: 32, h: 32, type: 'silver', timer: 0 }
+        ];
+        // 对话
+        let dialog = '';
+        let showDialog = false;
+
+        // 按键控制
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            // 空格交互
+            if (e.code === 'Space') {
+                if (showDialog) {
+                    showDialog = false;
+                } else {
+                    // 检测碰撞
+                    for (const cat of cats) {
+                        const dx = Math.abs(player.x - cat.x);
+                        const dy = Math.abs(player.y - cat.y);
+                        if (dx < 50 && dy < 50) {
+                            showDialog = true;
+                            dialog = cat.type === 'calico' ? '喵～我是塑料袋！' : '呼噜～我是钢镚！';
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+        document.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+        // 游戏循环
+        function gameLoop() {
+            // 清屏
+            ctx.fillStyle = SKY;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // 草地
+            ctx.fillStyle = GRASS;
+            ctx.fillRect(0, 400, canvas.width, 200);
+
+            // 更新玩家位置
+            if (keys['w'] || keys['arrowup']) player.y = Math.max(0, player.y - player.speed);
+            if (keys['s'] || keys['arrowdown']) player.y = Math.min(canvas.height - player.h, player.y + player.speed);
+            if (keys['a'] || keys['arrowleft']) player.x = Math.max(0, player.x - player.speed);
+            if (keys['d'] || keys['arrowright']) player.x = Math.min(canvas.width - player.w, player.x + player.speed);
+
+            // 更新小猫
+            for (const cat of cats) {
+                cat.timer++;
+                if (cat.timer > 120) {
+                    cat.x += Math.floor(Math.random() * 3) - 1;
+                    cat.y += Math.floor(Math.random() * 3) - 1;
+                    cat.x = Math.max(0, Math.min(canvas.width - cat.w, cat.x));
+                    cat.y = Math.max(0, Math.min(canvas.height - cat.h, cat.y));
+                    cat.timer = 0;
+                }
+            }
+
+            // 绘制玩家（星露谷风格像素）
+            ctx.fillStyle = PLAYER_GREEN;
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+            // 裤子
+            ctx.fillStyle = PLAYER_PANTS;
+            ctx.fillRect(player.x, player.y + 24, player.w, 24);
+
+            // 绘制小猫
+            for (const cat of cats) {
+                if (cat.type === 'calico') {
+                    // 三花（塑料袋）
+                    ctx.fillStyle = CALICO_WHITE;
+                    ctx.fillRect(cat.x, cat.y, cat.w, cat.h);
+                    ctx.fillStyle = CALICO_BLACK;
+                    ctx.fillRect(cat.x, cat.y, 16, 16);
+                    ctx.fillStyle = CALICO_ORANGE;
+                    ctx.fillRect(cat.x + 16, cat.y, 16, 16);
+                } else {
+                    // 银渐层（钢镚）
+                    ctx.fillStyle = SILVER;
+                    ctx.fillRect(cat.x, cat.y, cat.w, cat.h);
+                    ctx.fillStyle = SILVER_DARK;
+                    ctx.fillRect(cat.x, cat.y, cat.w, 8);
+                }
+            }
+
+            // 绘制对话
+            if (showDialog) {
+                ctx.fillStyle = BLACK;
+                ctx.fillRect(50, 500, 700, 80);
+                ctx.fillStyle = WHITE;
+                ctx.font = '24px 微软雅黑';
+                ctx.fillText(dialog, 70, 540);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 启动游戏
+        gameLoop();
+    </script>
+</body>
+</html>
